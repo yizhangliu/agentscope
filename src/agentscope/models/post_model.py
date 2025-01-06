@@ -3,7 +3,7 @@
 import json
 import time
 from abc import ABC
-from typing import Any, Union, Sequence, List
+from typing import Any, Union, Sequence, List, Optional
 
 import requests
 from loguru import logger
@@ -19,12 +19,13 @@ from ..message import Msg
 class PostAPIModelWrapperBase(ModelWrapperBase, ABC):
     """The base model wrapper for the model deployed on the POST API."""
 
-    model_type: str = "post_api"
+    model_type: str
 
     def __init__(
         self,
         config_name: str,
         api_url: str,
+        model_name: Optional[str] = None,
         headers: dict = None,
         max_length: int = 2048,
         timeout: int = 30,
@@ -42,6 +43,9 @@ class PostAPIModelWrapperBase(ModelWrapperBase, ABC):
                 The id of the model.
             api_url (`str`):
                 The url of the post request api.
+            model_name (`str`):
+                The name of the model. If `None`, the model name will be
+                extracted from the `json_args`.
             headers (`dict`, defaults to `None`):
                 The headers of the api. Defaults to None.
             max_length (`int`, defaults to `2048`):
@@ -76,13 +80,14 @@ class PostAPIModelWrapperBase(ModelWrapperBase, ABC):
                     **post_args
                 )
         """
-        if json_args is not None:
-            model_name = json_args.get(
-                "model",
-                json_args.get("model_name", None),
-            )
-        else:
-            model_name = None
+        if model_name is None:
+            if json_args is not None:
+                model_name = json_args.get(
+                    "model",
+                    json_args.get("model_name", None),
+                )
+            else:
+                model_name = None
 
         super().__init__(config_name=config_name, model_name=model_name)
 
@@ -235,8 +240,6 @@ class PostAPIDALLEWrapper(PostAPIModelWrapperBase):
     """A post api model wrapper compatible with openai dall_e"""
 
     model_type: str = "post_api_dall_e"
-
-    deprecated_model_type: str = "post_api_dalle"
 
     def _parse_response(self, response: dict) -> ModelResponse:
         if "data" not in response["data"]["response"]:
