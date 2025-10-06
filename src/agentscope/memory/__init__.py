@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-
-"""
-import al memory related modules
-"""
-
-from .memory import MemoryBase
-from .temporary_memory import TemporaryMemory
-
-__all__ = [
-    "MemoryBase",
-    "TemporaryMemory",
-=======
 """The memory module."""
 
 from ._memory_base import MemoryBase
@@ -25,5 +12,4 @@ __all__ = [
     "InMemoryMemory",
     "LongTermMemoryBase",
     "Mem0LongTermMemory",
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 ]

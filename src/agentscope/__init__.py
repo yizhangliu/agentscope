@@ -19,6 +19,7 @@ from . import evaluate
 from . import pipeline
 from . import tracing
 from . import rag
+from . import web_liuyz
 
 from ._logging import (
     logger,
