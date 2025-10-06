@@ -176,7 +176,10 @@ class DashScopeChatModel(ChatModelBase):
             self._validate_tool_choice(tool_choice, tools)
             kwargs["tool_choice"] = self._format_tool_choice(tool_choice)
 
-        if self.enable_thinking and "enable_thinking" not in kwargs:
+        if (
+            self.enable_thinking is not None
+            and "enable_thinking" not in kwargs
+        ):
             kwargs["enable_thinking"] = self.enable_thinking
 
         if structured_model:
@@ -398,7 +401,7 @@ class DashScopeChatModel(ChatModelBase):
             raise RuntimeError(response)
 
         content_blocks: List[TextBlock | ToolUseBlock] = []
-        metadata = None
+        metadata: dict | None = None
 
         message = response.output.choices[0].message
         content = message.get("content")

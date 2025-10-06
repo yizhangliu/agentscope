@@ -1,18 +1,4 @@
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-# pylint: disable=signature-differs
-"""Unit tests for pipeline classes and functions"""
-
-import unittest
-
-from agentscope.message import Msg
-from agentscope.pipelines import (
-    SequentialPipeline,
-    sequential_pipeline,
-)
-
-from agentscope.agents import AgentBase
-=======
 """Unit tests for pipeline classes and functions"""
 from typing import Any
 from unittest.async_case import IsolatedAsyncioTestCase
@@ -23,10 +9,10 @@ from agentscope.pipeline import (
     FanoutPipeline,
     sequential_pipeline,
     fanout_pipeline,
+    stream_printing_messages,
 )
 
 from agentscope.agent import AgentBase
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 
 
 class AddAgent(AgentBase):
@@ -34,16 +20,6 @@ class AddAgent(AgentBase):
 
     def __init__(self, value: int) -> None:
         """Initialize the agent"""
-<<<<<<< HEAD
-        super().__init__(name="Add")
-        self.value = value
-
-    def reply(self, x: Msg) -> Msg:
-        """Reply function"""
-        x.metadata += self.value
-        return x
-
-=======
         super().__init__()
         self.name = "Add"
         self.value = value
@@ -65,28 +41,56 @@ class AddAgent(AgentBase):
     ) -> Msg:
         """Handle interrupt"""
 
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
+
+class StreamAgent(AgentBase):
+    """Add agent class."""
+
+    def __init__(self) -> None:
+        """Initialize the agent"""
+        super().__init__()
+        self.name = "Stream"
+
+    async def reply(self) -> Msg | None:
+        """Reply function"""
+        await self.print(
+            Msg(
+                self.name,
+                "123",
+                "user",
+            ),
+        )
+        await self.print(
+            Msg(
+                "user",
+                "456",
+                "user",
+            ),
+        )
+        await self.print(
+            Msg(
+                self.name,
+                "789",
+                "user",
+            ),
+        )
+        return None
+
+    async def observe(self, msg: Msg | list[Msg] | None) -> None:
+        """Observe function"""
+
+    async def handle_interrupt(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Msg:
+        """Handle interrupt"""
+
 
 class MultAgent(AgentBase):
     """Mult agent class."""
 
     def __init__(self, value: int) -> None:
         """Initialize the agent"""
-<<<<<<< HEAD
-        super().__init__(name="Mult")
-        self.value = value
-
-    def reply(self, x: Msg) -> Msg:
-        """Reply function"""
-        x.metadata *= self.value
-        return x
-
-
-class PipelineTest(unittest.TestCase):
-    """Test cases for Pipelines"""
-
-    def test_functional_sequential_pipeline(self) -> None:
-=======
         super().__init__()
         self.name = "Mult"
         self.value = value
@@ -113,28 +117,12 @@ class PipelineTest(IsolatedAsyncioTestCase):
     """Test cases for Pipelines"""
 
     async def test_functional_sequential_pipeline(self) -> None:
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
         """Test SequentialPipeline executes agents sequentially"""
 
         add1 = AddAgent(1)
         add2 = AddAgent(2)
         mult3 = MultAgent(3)
 
-<<<<<<< HEAD
-        x = Msg("user", "", "user", metadata=0)
-        res = sequential_pipeline([add1, add2, mult3], x)
-        self.assertEqual(9, res.metadata)
-
-        x = Msg("user", "", "user", metadata=0)
-        res = sequential_pipeline([add1, mult3, add2], x)
-        self.assertEqual(5, res.metadata)
-
-        x = Msg("user", "", "user", metadata=0)
-        res = sequential_pipeline([mult3, add1, add2], x)
-        self.assertEqual(3, res.metadata)
-
-    def test_class_sequential_pipeline(self) -> None:
-=======
         x = Msg("user", "", "user", metadata={"result": 0})
         res = await sequential_pipeline([add1, add2, mult3], x)
         self.assertEqual(9, res.metadata["result"])
@@ -148,30 +136,12 @@ class PipelineTest(IsolatedAsyncioTestCase):
         self.assertEqual(3, res.metadata["result"])
 
     async def test_class_sequential_pipeline(self) -> None:
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
         """Test SequentialPipeline executes agents sequentially"""
 
         add1 = AddAgent(1)
         add2 = AddAgent(2)
         mult3 = MultAgent(3)
 
-<<<<<<< HEAD
-        x = Msg("user", "", "user", metadata=0)
-        pipeline = SequentialPipeline([add1, add2, mult3])
-        self.assertEqual(pipeline(x).metadata, 9)
-
-        x = Msg("user", "", "user", metadata=0)
-        pipeline = SequentialPipeline([add1, mult3, add2])
-        self.assertEqual(pipeline(x).metadata, 5)
-
-        x = Msg("user", "", "user", metadata=0)
-        pipeline = SequentialPipeline([mult3, add1, add2])
-        self.assertEqual(pipeline(x).metadata, 3)
-
-
-if __name__ == "__main__":
-    unittest.main()
-=======
         x = Msg("user", "", "user", metadata={"result": 0})
         pipeline = SequentialPipeline([add1, add2, mult3])
         res = await pipeline(x)
@@ -374,4 +344,35 @@ if __name__ == "__main__":
         self.assertEqual(len(res), 2)
         self.assertIsNone(res[0])
         self.assertIsNone(res[1])
->>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
+
+    async def test_stream_printing_messages(self) -> None:
+        """Test stream_printing_messages function"""
+
+        agent = StreamAgent()
+
+        i = 0
+        async for msg, last in stream_printing_messages(
+            [agent],
+            agent(),
+        ):
+            self.assertTrue(last)
+
+            if i == 0:
+                self.assertEqual(
+                    msg.content,
+                    "123",
+                )
+
+            elif i == 1:
+                self.assertEqual(
+                    msg.content,
+                    "456",
+                )
+
+            elif i == 2:
+                self.assertEqual(
+                    msg.content,
+                    "789",
+                )
+
+            i += 1

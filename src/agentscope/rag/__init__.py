@@ -1,10 +1,33 @@
 # -*- coding: utf-8 -*-
-""" Import RAG related modules in the package. """
-from .knowledge import Knowledge, RetrievedChunk
-from .knowledge_bank import KnowledgeBank
+"""The retrieval-augmented generation (RAG) module in AgentScope."""
+
+from ._document import (
+    DocMetadata,
+    Document,
+)
+from ._reader import (
+    ReaderBase,
+    TextReader,
+    PDFReader,
+    ImageReader,
+)
+from ._store import (
+    VDBStoreBase,
+    QdrantStore,
+)
+from ._knowledge_base import KnowledgeBase
+from ._simple_knowledge import SimpleKnowledge
+
 
 __all__ = [
-    "Knowledge",
-    "RetrievedChunk",
-    "KnowledgeBank",
+    "ReaderBase",
+    "TextReader",
+    "PDFReader",
+    "ImageReader",
+    "DocMetadata",
+    "Document",
+    "VDBStoreBase",
+    "QdrantStore",
+    "KnowledgeBase",
+    "SimpleKnowledge",
 ]

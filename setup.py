@@ -140,28 +140,35 @@ minimal_requires = [
     "docstring_parser",
     "json5",
     "json_repair",
-    "mcp",
+    "mcp>=1.13",
     "numpy",
     "openai",
     "python-datauri",
     "opentelemetry-api",
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",
-    "json5",
-    "aioitertools",
     "python-socketio",
     "shortuuid",
     "tiktoken",
+    "sounddevice",
 ]
 
 extra_requires = [
+    # Model
     "ollama",
     "google-genai",
     "Pillow",
     "transformers",
     "jinja2",
+    # Evaluator
     "ray",
+    # Long-term memory
     "mem0ai",
+    "packaging",
+    # RAG
+    "pypdf",
+    "nltk",
+    "qdrant-client",
 ]
 
 dev_requires = [

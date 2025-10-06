@@ -132,9 +132,17 @@ Quick overview of important features in **AgentScope 1.0**:
 | evaluation | Provide distributed and parallel evaluation                                        | [Evaluation](https://doc.agentscope.io/tutorial/task_eval.html)         |
 | formatter  | Support multi-agent prompt formatting with tools API                               | [Prompt Formatter](https://doc.agentscope.io/tutorial/task_prompt.html) |
 |            | Support truncation-based formatter strategy                                        |                                                                         |
+| plan       | Support ReAct-based long-term planning                                             | [Plan](https://doc.agentscope.io/tutorial/task_plan.html)               |
+|            | Support manual plan specification                                                  |                                                                         |
+| RAG        | Support agentic RAG                                                                | [RAG](https://doc.agentscope.io/tutorial/task_rag.html)                 |
+|            | Support multimodal RAG                                                             |                                                                         |
 | ...        |                                                                                    |                                                                         |
 
 ## 📢 News
+- **[2025-09]** **RAG** module in AgentScope 1.0 is online now! Check our [tutorial](https://doc.agentscope.io/tutorial/task_rag.html) and [example](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/rag) for more details.
+- **[2025-09]** **Voice agent** is online! `ReActAgent` supports Qwen-Omni and GPT-Audio natively now, check our [new example](https://github.com/agentscope-ai/agentscope/tree/main/examples/agent/voice_agent) and [roadmap](https://github.com/agentscope-ai/agentscope/issues/773).
+- **[2025-09]** A new powerful 📋**Plan** module is online now! Check out the [tutorial](https://doc.agentscope.io/tutorial/task_plan.html) for more details.
+- **[2025-09]** **AgentScope Runtime** is open-sourced now! Enabling effective agent deployment with sandboxed tool execution for production-ready AI applications. Check out the [GitHub repo](https://github.com/agentscope-ai/agentscope-runtime).
 - **[2025-09]** **AgentScope Studio** is open-sourced now! Check out the [GitHub repo](https://github.com/agentscope-ai/agentscope-studio).
 - **[2025-08]** The new tutorial of v1 is online now! Check out the [tutorial](https://doc.agentscope.io) for more details.
 - **[2025-08]** 🎉🎉 AgentScope v1 is released now! This version fully embraces the asynchronous execution, providing many new features and improvements. Check out [changelog](https://github.com/agentscope-ai/agentscope/blob/main/docs/changelog.md) for detailed changes.
@@ -719,6 +727,7 @@ as_studio
   - [Long-Term Memory](https://doc.agentscope.io/tutorial/task_long_term_memory.html)
   - [Agent](https://doc.agentscope.io/tutorial/task_agent.html)
   - [Pipeline](https://doc.agentscope.io/tutorial/task_pipeline.html)
+  - [Plan](https://doc.agentscope.io/tutorial/task_plan.html)
   - [State/Session Management](https://doc.agentscope.io/tutorial/task_state.html)
   - [Agent Hooks](https://doc.agentscope.io/tutorial/task_hook.html)
   - [MCP](https://doc.agentscope.io/tutorial/task_mcp.html)
@@ -730,18 +739,29 @@ as_studio
 - API
   - [API Docs](https://doc.agentscope.io/api/agentscope.html)
 - [Examples](https://github.com/agentscope-ai/agentscope/tree/main/examples)
+  - Functional
+    - [MCP](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/mcp)
+    - [Plan](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/plan)
+    - [Structured Output](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/structured_output)
+    - [RAG](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/rag)
+    - [Long-Term Memory](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/long_term_memory)
+    - [Session with SQLite](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/session_with_sqlite)
+    - [Stream Printing Messages](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/stream_printing_messages)
+  - Agent
+    - [ReAct Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/react_agent)
+    - [Voice Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/agent/voice_agent)
+    - [Deep Research Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/agent_deep_research)
+    - [Browser-use Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/agent_browser)
+    - [Meta Planner Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/meta_planner_agent)
   - Game
     - [Nine-player Werewolves](https://github.com/agentscope-ai/agentscope/tree/main/examples/game/werewolves)
   - Workflow
     - [Multi-agent Debate](https://github.com/agentscope-ai/agentscope/tree/main/examples/workflows/multiagent_debate)
     - [Multi-agent Conversation](https://github.com/agentscope-ai/agentscope/tree/main/examples/workflows/multiagent_conversation)
+    - [Multi-agent Concurrent](https://github.com/agentscope-ai/agentscope/tree/main/examples/workflows/multiagent_concurrent)
   - Evaluation
     - [ACEBench](https://github.com/agentscope-ai/agentscope/tree/main/examples/evaluation/ace_bench)
-  - Functional
-    - [ReAct Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/react_agent)
-    - [MCP](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/agent_with_mcp)
-    - [Structured Output](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/structured_output)
-    - [Long-Term Memory](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/long_term_memory)
+
 
 >>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 ## ⚖️ License

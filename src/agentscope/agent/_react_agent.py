@@ -6,15 +6,28 @@ import asyncio
 from typing import Type, Any, AsyncGenerator, Literal
 
 import shortuuid
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, Field
 
 from ._react_agent_base import ReActAgentBase
+from .._logging import logger
 from ..formatter import FormatterBase
 from ..memory import MemoryBase, LongTermMemoryBase, InMemoryMemory
 from ..message import Msg, ToolUseBlock, ToolResultBlock, TextBlock
 from ..model import ChatModelBase
+from ..rag import KnowledgeBase, Document
+from ..plan import PlanNotebook
 from ..tool import Toolkit, ToolResponse
 from ..tracing import trace_reply
+
+
+class _QueryRewriteModel(BaseModel):
+    """The structured model used for query rewriting."""
+
+    rewritten_query: str = Field(
+        description=(
+            "The rewritten query, which should be specific and concise. "
+        ),
+    )
 
 
 def finish_function_pre_print_hook(
@@ -80,6 +93,10 @@ class ReActAgent(ReActAgentBase):
         ] = "both",
         enable_meta_tool: bool = False,
         parallel_tool_calls: bool = False,
+        knowledge: KnowledgeBase | list[KnowledgeBase] | None = None,
+        enable_rewrite_query: bool = True,
+        plan_notebook: PlanNotebook | None = None,
+        print_hint_msg: bool = False,
         max_iters: int = 10,
     ) -> None:
         """Initialize the ReAct agent
@@ -121,6 +138,21 @@ class ReActAgent(ReActAgentBase):
             parallel_tool_calls (`bool`, defaults to `False`):
                 When LLM generates multiple tool calls, whether to execute
                 them in parallel.
+            knowledge (`KnowledgeBase | list[KnowledgeBase] | None`, optional):
+                The knowledge object(s) used by the agent to retrieve
+                relevant documents at the beginning of each reply.
+            enable_rewrite_query (`bool`, defaults to `True`):
+                Whether ask the agent to rewrite the user input query before
+                retrieving from the knowledge base(s), e.g. rewrite "Who am I"
+                to "{user's name}" to get more relevant documents. Only works
+                when the knowledge base(s) is provided.
+            plan_notebook (`PlanNotebook | None`, optional):
+                The plan notebook instance, allow the agent to finish the
+                complex task by decomposing it into a sequence of subtasks.
+            print_hint_msg (`bool`, defaults to `False`):
+                Whether to print the hint messages, including the reasoning
+                hint from the plan notebook, the retrieved information from
+                the long-term memory and knowledge base(s).
             max_iters (`int`, defaults to `10`):
                 The maximum number of iterations of the reasoning-acting loops.
         """
@@ -139,6 +171,7 @@ class ReActAgent(ReActAgentBase):
         self.model = model
         self.formatter = formatter
 
+        # -------------- Memory management --------------
         # Record the dialogue history in the memory
         self.memory = memory or InMemoryMemory()
         # If provide the long-term memory, it will be used to retrieve info
@@ -151,8 +184,12 @@ class ReActAgent(ReActAgentBase):
             "static_control",
             "both",
         ]
-        self._agent_control = long_term_memory and not self._static_control
+        self._agent_control = long_term_memory and long_term_memory_mode in [
+            "agent_control",
+            "both",
+        ]
 
+        # -------------- Tool management --------------
         # If None, a default Toolkit will be created
         self.toolkit = toolkit or Toolkit()
         self.toolkit.register_tool_function(
@@ -167,19 +204,55 @@ class ReActAgent(ReActAgentBase):
                 long_term_memory.retrieve_from_memory,
             )
         # Add a meta tool function to allow agent-controlled tool management
-        if enable_meta_tool:
+        if enable_meta_tool or plan_notebook:
             self.toolkit.register_tool_function(
                 self.toolkit.reset_equipped_tools,
             )
 
         self.parallel_tool_calls = parallel_tool_calls
+
+        # -------------- RAG management --------------
+        # The knowledge base(s) used by the agent
+        if isinstance(knowledge, KnowledgeBase):
+            knowledge = [knowledge]
+        self.knowledge: list[KnowledgeBase] = knowledge or []
+        self.enable_rewrite_query = enable_rewrite_query
+
+        # -------------- Plan management --------------
+        # Equipped the plan-related tools provided by the plan notebook as
+        # a tool group named "plan_related". So that the agent can activate
+        # the plan tools by the meta tool function
+        self.plan_notebook = None
+        if plan_notebook:
+            self.plan_notebook = plan_notebook
+            self.toolkit.create_tool_group(
+                "plan_related",
+                description=self.plan_notebook.description,
+            )
+            for tool in plan_notebook.list_tools():
+                self.toolkit.register_tool_function(
+                    tool,
+                    group_name="plan_related",
+                )
+
+        # If print the reasoning hint messages
+        self.print_hint_msg = print_hint_msg
+
+        # The maximum number of iterations of the reasoning-acting loops
         self.max_iters = max_iters
+
+        # The hint messages that will be attached to the prompt to guide the
+        # agent's behavior before each reasoning step, and cleared after
+        # each reasoning step, meaning the hint messages is one-time use only.
+        # We use an InMemoryMemory instance to store the hint messages
+        self._reasoning_hint_msgs = InMemoryMemory()
 
         # Variables to record the intermediate state
 
         # If required structured output model is provided
         self._required_structured_model: Type[BaseModel] | None = None
 
+        # -------------- State registration and hooks --------------
         # Register the status variables
         self.register_state("name")
         self.register_state("_sys_prompt")
@@ -215,22 +288,13 @@ class ReActAgent(ReActAgentBase):
             `Msg`:
                 The output message generated by the agent.
         """
+        # Record the input message(s) in the memory
         await self.memory.add(msg)
 
-        # Long-term memory retrieval
-        if self._static_control:
-            # Retrieve information from the long-term memory if available
-            retrieved_info = await self.long_term_memory.retrieve(msg)
-            if retrieved_info:
-                await self.memory.add(
-                    Msg(
-                        name="long_term_memory",
-                        content="<long_term_memory>The content below are "
-                        "retrieved from long-term memory, which maybe "
-                        f"useful:\n{retrieved_info}</long_term_memory>",
-                        role="user",
-                    ),
-                )
+        # Retrieve relevant records from the long-term memory if activated
+        await self._retrieve_from_long_term_memory(msg)
+        # Retrieve relevant documents from the knowledge base(s) if any
+        await self._retrieve_from_knowledge(msg)
 
         self._required_structured_model = structured_model
         # Record structured output model if provided
@@ -288,12 +352,24 @@ class ReActAgent(ReActAgentBase):
         self,
     ) -> Msg:
         """Perform the reasoning process."""
+        if self.plan_notebook:
+            # Insert the reasoning hint from the plan notebook
+            hint_msg = await self.plan_notebook.get_current_hint()
+            if self.print_hint_msg and hint_msg:
+                await self.print(hint_msg)
+            await self._reasoning_hint_msgs.add(hint_msg)
+
+        # Convert Msg objects into the required format of the model API
         prompt = await self.formatter.format(
             msgs=[
                 Msg("system", self.sys_prompt, "system"),
                 *await self.memory.get_memory(),
+                # The hint messages to guide the agent's behavior, maybe empty
+                *await self._reasoning_hint_msgs.get_memory(),
             ],
         )
+        # Clear the hint messages after use
+        await self._reasoning_hint_msgs.clear()
 
         res = await self.model(
             prompt,
@@ -369,7 +445,7 @@ class ReActAgent(ReActAgentBase):
 
         Returns:
             `Union[Msg, None]`:
-                Return a message to the user if the `_finish_function` is
+                Return a message to the user if the `finish_function` is
                 called, otherwise return `None`.
         """
 
@@ -401,16 +477,21 @@ class ReActAgent(ReActAgentBase):
                 if (
                     tool_call["name"] != self.finish_function_name
                     or tool_call["name"] == self.finish_function_name
-                    and not chunk.metadata.get("success")
+                    and (
+                        chunk.metadata is None
+                        or not chunk.metadata.get("success")
+                    )
                 ):
                     await self.print(tool_res_msg, chunk.is_last)
 
                 # Return message if generate_response is called successfully
-                if tool_call[
-                    "name"
-                ] == self.finish_function_name and chunk.metadata.get(
-                    "success",
-                    True,
+                if (
+                    tool_call["name"] == self.finish_function_name
+                    and chunk.metadata
+                    and chunk.metadata.get(
+                        "success",
+                        True,
+                    )
                 ):
                     response_msg = chunk.metadata.get("response_msg")
 
@@ -541,3 +622,125 @@ class ReActAgent(ReActAgentBase):
             },
             is_last=True,
         )
+
+    async def _retrieve_from_long_term_memory(
+        self,
+        msg: Msg | list[Msg] | None,
+    ) -> None:
+        """Insert the retrieved information from the long-term memory into
+        the short-term memory as a Msg object.
+
+        Args:
+            msg (`Msg | list[Msg] | None`):
+                The input message to the agent.
+        """
+        if self._static_control and msg:
+            # Retrieve information from the long-term memory if available
+            retrieved_info = await self.long_term_memory.retrieve(msg)
+            if retrieved_info:
+                retrieved_msg = Msg(
+                    name="long_term_memory",
+                    content="<long_term_memory>The content below are "
+                    "retrieved from long-term memory, which maybe "
+                    f"useful:\n{retrieved_info}</long_term_memory>",
+                    role="user",
+                )
+                if self.print_hint_msg:
+                    await self.print(retrieved_msg, True)
+                await self.memory.add(retrieved_msg)
+
+    async def _retrieve_from_knowledge(
+        self,
+        msg: Msg | list[Msg] | None,
+    ) -> None:
+        """Insert the retrieved documents from the RAG knowledge base(s) if
+        available.
+
+        Args:
+            msg (`Msg | list[Msg] | None`):
+                The input message to the agent.
+        """
+        if self.knowledge and msg:
+            # Prepare the user input query
+            query = None
+            if isinstance(msg, Msg):
+                query = msg.get_text_content()
+            elif isinstance(msg, list):
+                query = "\n".join(_.get_text_content() for _ in msg)
+
+            # Skip if the query is empty
+            if not query:
+                return
+
+            # Rewrite the query by the LLM if enabled
+            if self.enable_rewrite_query:
+                try:
+                    rewrite_prompt = await self.formatter.format(
+                        msgs=[
+                            Msg("system", self.sys_prompt, "system"),
+                            *await self.memory.get_memory(),
+                            Msg(
+                                "user",
+                                "<system-hint>Now you need to rewrite "
+                                "the above user query to be more specific and "
+                                "concise for knowledge retrieval. For "
+                                "example, rewrite the query 'what happened "
+                                "last day' to 'what happened on 2023-10-01' "
+                                "(assuming today is 2023-10-02)."
+                                "</system-hint>",
+                                "user",
+                            ),
+                        ],
+                    )
+                    stream_tmp = self.model.stream
+                    self.model.stream = False
+                    res = await self.model(
+                        rewrite_prompt,
+                        structured_model=_QueryRewriteModel,
+                    )
+                    self.model.stream = stream_tmp
+                    if res.metadata and res.metadata.get("rewritten_query"):
+                        query = res.metadata["rewritten_query"]
+
+                except Exception as e:
+                    logger.warning(
+                        "Skipping the query rewriting due to error: %s",
+                        str(e),
+                    )
+
+            docs: list[Document] = []
+            for kb in self.knowledge:
+                # retrieve the user input query
+                docs.extend(
+                    await kb.retrieve(query=query),
+                )
+            if docs:
+                # Rerank by the relevance score
+                docs = sorted(
+                    docs,
+                    key=lambda doc: doc.score or 0.0,
+                    reverse=True,
+                )
+                # Prepare the retrieved knowledge string
+                retrieved_msg = Msg(
+                    name="user",
+                    content=[
+                        TextBlock(
+                            type="text",
+                            text=(
+                                "<retrieved_knowledge>Use the following "
+                                "content from the knowledge base(s) if it's "
+                                "helpful:\n"
+                            ),
+                        ),
+                        *[_.metadata.content for _ in docs],
+                        TextBlock(
+                            type="text",
+                            text="</retrieved_knowledge>",
+                        ),
+                    ],
+                    role="user",
+                )
+                if self.print_hint_msg:
+                    await self.print(retrieved_msg, True)
+                await self.memory.add(retrieved_msg)
