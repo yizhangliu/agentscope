@@ -4,7 +4,10 @@ on:
     paths:
       - 'README.md'
       - 'README_ZH.md'
+<<<<<<< HEAD
       - 'README_JA.md'
+=======
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     branches-ignore:
       - 'main'
 
@@ -19,9 +22,17 @@ jobs:
         with:
           TOC_TITLE: "## 📑 Table of Contents"
           CREATE_PR: false
+<<<<<<< HEAD
           TARGET_PATHS: "README.md,README_ZH.md,README_JA.md"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TOC_TITLE_MAP: |
             README.md: ## 📑 Table of Contents
             README_ZH.md: ## 📑 目录
             README_JA.md: ## 📑 目次
+=======
+          TARGET_PATHS: "README.md,README_ZH.md"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOC_TITLE_MAP: |
+            README.md: ## 📑 Table of Contents
+            README_ZH.md: ## 📑 目录
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506

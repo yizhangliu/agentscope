@@ -11,19 +11,31 @@ jobs:
         os: [ubuntu-latest]
     env:
       OS: ${{ matrix.os }}
+<<<<<<< HEAD
       PYTHON: '3.9'
+=======
+      PYTHON: '3.10'
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     steps:
     - uses: actions/checkout@master
     - name: Setup Python
       uses: actions/setup-python@master
       with:
+<<<<<<< HEAD
         python-version: 3.9
+=======
+        python-version: '3.10'
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     - name: Update setuptools
       run: |
         pip install setuptools==68.2.2 wheel==0.41.2
     - name: Install AgentScope
       run: |
+<<<<<<< HEAD
         pip install -q -e .[full]
+=======
+        pip install -q -e .[dev]
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     - name: Install pre-commit
       run: |
         pre-commit install

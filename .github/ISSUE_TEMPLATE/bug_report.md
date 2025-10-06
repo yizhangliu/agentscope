@@ -27,8 +27,13 @@ Detailed error messages.
 
 **Environment (please complete the following information):**
 
+<<<<<<< HEAD
 - AgentScope Version: [e.g. 0.0.2 via `print(agentscope.__version__)`]
 - Python Version: [e.g. 3.9]
+=======
+- AgentScope Version: [e.g. 1.0.0 via `print(agentscope.__version__)`]
+- Python Version: [e.g. 3.10]
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 - OS: [e.g. macos, windows]
 
 **Additional context**

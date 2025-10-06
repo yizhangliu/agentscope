@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
 """ Setup for installation."""
 from __future__ import absolute_import, division, print_function
 
 import re
 
+=======
+"""Setup script for AgentScope."""
+import re
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 import setuptools
 
 # obtain version from src/agentscope/_version.py
@@ -15,6 +20,7 @@ with open("src/agentscope/_version.py", encoding="UTF-8") as f:
     ).group(1)
 
 NAME = "agentscope"
+<<<<<<< HEAD
 URL = "https://github.com/modelscope/agentscope"
 
 # released requires
@@ -124,6 +130,48 @@ extra_online_requires = extra_full_requires + [
     "flask_babel",
     "babel==2.15.0",
     "gunicorn",
+=======
+URL = "https://github.com/agentscope-ai/agentscope"
+
+minimal_requires = [
+    "aioitertools",
+    "anthropic",
+    "dashscope",
+    "docstring_parser",
+    "json5",
+    "json_repair",
+    "mcp",
+    "numpy",
+    "openai",
+    "python-datauri",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "json5",
+    "aioitertools",
+    "python-socketio",
+    "shortuuid",
+    "tiktoken",
+]
+
+extra_requires = [
+    "ollama",
+    "google-genai",
+    "Pillow",
+    "transformers",
+    "jinja2",
+    "ray",
+    "mem0ai",
+]
+
+dev_requires = [
+    "pre-commit",
+    "pytest",
+    "sphinx-gallery",
+    "furo",
+    "myst_parser",
+    "matplotlib",
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 ]
 
 with open("README.md", "r", encoding="UTF-8") as fh:
@@ -142,6 +190,7 @@ setuptools.setup(
     keywords=["deep-learning", "multi agents", "agents"],
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
+<<<<<<< HEAD
     package_data={
         "agentscope.prompt": ["_prompt_examples.json"],
         "agentscope.service.browser": ["markpage.js"],
@@ -181,4 +230,20 @@ setuptools.setup(
             "as_server=agentscope.server.launcher:as_server",
         ],
     },
+=======
+    install_requires=minimal_requires,
+    extras_require={
+        "full": minimal_requires + extra_requires,
+        "dev": minimal_requires + extra_requires + dev_requires,
+    },
+    license="Apache-2.0",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.10",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.10",
+    entry_points={},
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 )

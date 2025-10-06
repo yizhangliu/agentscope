@@ -40,6 +40,10 @@ repos:
                 --disable-error-code=attr-defined,
                 --disable-error-code=import-untyped,
                 --disable-error-code=truthy-function,
+<<<<<<< HEAD
+=======
+                --disable-error-code=typeddict-item,
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
                 --follow-imports=skip,
                 --explicit-package-bases,
                 ]

@@ -9,7 +9,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13]
+<<<<<<< HEAD
         python-version: ['3.9', '3.10', '3.11', '3.12']
+=======
+        python-version: ['3.10', '3.11', '3.12']
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     env:
       OS: ${{ matrix.os }}
     steps:
@@ -20,6 +24,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Update setuptools
       run: |
+<<<<<<< HEAD
         pip install setuptools==68.2.2 wheel==0.41.2
     - name: Install Minimal Dependencies
       run: |
@@ -34,6 +39,16 @@ jobs:
     - name: Run tests with coverage
       run: |
         coverage run tests/run.py
+=======
+        pip install setuptools==78.1.1 wheel==0.45.1
+    - name: Install Dev Dependencies
+      run: |
+        pip install -q -e .[dev]
+        pip install coverage pytest
+    - name: Run tests with coverage
+      run: |
+        coverage run -m pytest tests
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
     - name: Generate coverage report
       run: |
         coverage report -m

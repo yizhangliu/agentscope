@@ -24,16 +24,27 @@ jobs:
           python-version: '3.10'
       - name: Update setuptools
         run: |
+<<<<<<< HEAD
           pip install setuptools==68.2.2 wheel==0.41.2
       - name: Install Dependencies
         run: |
           pip install -q -e .[full]
+=======
+          pip install setuptools==78.1.1 wheel==0.45.1
+      - name: Install Dependencies
+        run: |
+          pip install -q -e .[dev]
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
       - name: Add execute permission to build.sh
         run: |
           chmod +x docs/tutorial/en/build.sh
       - name: Build English Documentation
         env:
           DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+<<<<<<< HEAD
+=======
+          GAODE_API_KEY: ${{ secrets.GAODE_API_KEY }}
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
         run: |
           cd docs/tutorial/en/
           ./build.sh
@@ -43,6 +54,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/tutorial/en/build/html
           cname: doc.agentscope.io
+<<<<<<< HEAD
+=======
+          keep_files: true
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
 
   build_zh:
     needs: build_en
@@ -69,16 +84,27 @@ jobs:
         run: npm --version
       - name: Update setuptools
         run: |
+<<<<<<< HEAD
           pip install setuptools==68.2.2 wheel==0.41.2
       - name: Install Dependencies
         run: |
           pip install -q -e .[full]
+=======
+          pip install setuptools==78.1.1 wheel==0.45.1
+      - name: Install Dependencies
+        run: |
+          pip install -q -e .[dev]
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
       - name: Add execute permission to build.sh
         run: |
           chmod +x docs/tutorial/zh_CN/build.sh
       - name: Build Chinese Documentation
         env:
           DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+<<<<<<< HEAD
+=======
+          GAODE_API_KEY: ${{ secrets.GAODE_API_KEY }}
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506
         run: |
           cd docs/tutorial/zh_CN/
           ./build.sh
@@ -89,3 +115,7 @@ jobs:
           publish_dir: docs/tutorial/zh_CN/build/html
           destination_dir: zh_CN
           cname: doc.agentscope.io
+<<<<<<< HEAD
+=======
+          keep_files: true
+>>>>>>> 6ee8fa352bcaf888adf82124e0e0a5c394454506

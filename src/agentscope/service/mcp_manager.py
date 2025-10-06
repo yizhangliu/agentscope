@@ -258,6 +258,9 @@ class MCPSessionHandler:
                 [x.model_dump() for x in result.content],
                 result.isError,
             )
+            # logger.info(f"Executing_Liuyz {tool_name}_result: [is_error={is_error}] / [content_len={len(content[0].text)}]") #liuyz
+            # logger.info(f"Executing_Liuyz {tool_name}_result: [is_error={is_error}] / [content={content[0].text}]") #liuyz
+            logger.info(f"Executing_Liuyz {tool_name}_result: [is_error={is_error}] / [content={content}]") #liuyz
 
             if is_error:
                 return ServiceResponse(
@@ -269,6 +272,7 @@ class MCPSessionHandler:
                 content=content,
             )
         except Exception as e:
+            logger.info(f"Executing_error: {str(e)}") #liuyz
             return ServiceResponse(
                 status=ServiceExecStatus.ERROR,
                 content=f"Error: {e}\n\n"
